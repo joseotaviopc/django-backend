@@ -5,6 +5,11 @@ from .models import AlunosModel
 class AlunosSchema(ModelSchema):
     class Meta:
         model = AlunosModel
+        fields = ['nome', 'email', 'faixa', 'data_nascimento']
+
+class AlunosEditSchema(ModelSchema):
+    class Meta:
+        model = AlunosModel
         fields = ['id', 'nome', 'email', 'faixa', 'data_nascimento']
 
 class AlunoUpdateSchema(Schema):

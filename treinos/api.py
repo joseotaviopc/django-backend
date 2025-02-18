@@ -1,7 +1,7 @@
 from typing import List
 
 from ninja import Router
-from .models import AlunosModel, AulasConcluidas
+from .models import AlunosModel, AulasConcluidas, faixa_choices
 from .schemas import AlunoUpdateSchema, AlunosSchema, AlunosSchemaOut, Error, ProgressoAlunoSchema, AulaRealizadaSchema
 from .graduacao import *
 from datetime import date
@@ -46,6 +46,9 @@ def atualizar_um_aluno(request, aluno_schema:AlunoUpdateSchema, aluno_id: str):
 
         for attr, value in aluno_schema.dict().items():
             if value:
+                if attr == "data_nascimento":
+                    print(attr, value, type(value))
+                    value = date.fromisoformat(value)
                 setattr(aluno, attr, value)
         aluno.save()
 
@@ -59,12 +62,23 @@ def atualizar_um_aluno(request, aluno_schema:AlunoUpdateSchema, aluno_id: str):
     except AlunosModel.DoesNotExist:
         return 400, {"message": 'Aluno não encontrado'}
 
-@treinos_router.get('/aluno', response={200: List[AlunosSchema], 400: Error})
+@treinos_router.get('/aluno', response={200: List[AlunosSchemaOut], 400: Error})
 def listar_todos_alunos(request):
     todos_alunos = AlunosModel.objects.all()
+    result_alunos = []
+    for aluno in todos_alunos:
+        output_aluno = AlunosSchemaOut(
+            id=f"{aluno.id}",
+            nome=aluno.nome,
+            email=aluno.email,
+            faixa=aluno.faixa,
+            data_nascimento=aluno.data_nascimento_formatada(),
+        )
+        result_alunos.append(output_aluno)
+
     if not todos_alunos:
         return 400, {"message": 'Algo saiu errado na busca de alunos'}
-    return todos_alunos
+    return result_alunos
 
 @treinos_router.delete('/aluno/{aluno_id}', response={200: str, 400: Error})
 def deletar_um_aluno(request, aluno_id: str):
